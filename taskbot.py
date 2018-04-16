@@ -4,14 +4,14 @@ import json
 import requests
 import time
 import urllib
+import string
 
 import sqlalchemy
 
 import db
 from db import Task
 
-TOKEN = ""
-URL = "https://api.telegram.org/bot{}/".format(TOKEN)
+TOKEN = "tokenBot.txt"
 
 HELP = """
  /new NOME
@@ -26,6 +26,13 @@ HELP = """
  /priority ID PRIORITY{low, medium, high}
  /help
 """
+
+def readToken():
+    inFile = open(TOKEN, 'r')
+    line = inFile.readline()
+    return line.rstrip()
+
+URL = "https://api.telegram.org/bot{}/".format(readToken())
 
 def get_url(url):
     response = requests.get(url)

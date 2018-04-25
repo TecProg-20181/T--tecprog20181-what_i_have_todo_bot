@@ -114,6 +114,22 @@ def duplicateTask(msg, chat):
         db.session.commit()
         send_message("New task *TODO* [[{}]] {}".format(dtask.id, dtask.name), chat)
 
+def moveToDone(msg, chat):
+    if not msg.isdigit():
+        send_message("You must inform the task id", chat)
+    else:
+        task_id = int(msg)
+        query = db.session.query(Task).filter_by(id=task_id, chat=chat)
+        try:
+            task = query.one()
+        except sqlalchemy.orm.exc.NoResultFound:
+            send_message("_404_ Task {} not found x.x".format(task_id), chat)
+            return
+    task.status = 'DONE'
+    db.session.commit()
+    send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
+
+
 def delete(msg, chat):
 
     if not msg.isdigit():
@@ -255,20 +271,7 @@ def handle_updates(updates):
                 send_message("*DOING* task [[{}]] {}".format(task.id, task.name), chat)
 
         elif command == '/done':
-            if not msg.isdigit():
-                send_message("You must inform the task id", chat)
-            else:
-                task_id = int(msg)
-                query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-                try:
-                    task = query.one()
-                except sqlalchemy.orm.exc.NoResultFound:
-                    send_message("_404_ Task {} not found x.x".format(task_id), chat)
-                    return
-                task.status = 'DONE'
-                db.session.commit()
-                send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
-
+            moveToDone(msg, chat)
         elif command == '/list':
             list(chat)
 

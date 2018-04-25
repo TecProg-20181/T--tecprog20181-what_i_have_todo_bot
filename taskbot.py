@@ -90,16 +90,22 @@ def deps_text(task, chat, preceed=''):
 
     return text
 
+def treatException(task_id, chat):
+    query = db.session.query(Task).filter_by(id=task_id, chat=chat)
+    try:
+        task = query.one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        send_message("_404_ Task {} not found x.x".format(task_id), chat)
+        return 1
+    return task
+
 def duplicateTask(msg, chat):
         if not msg.isdigit():
             send_message("You must inform the task id", chat)
         else:
             task_id = int(msg)
-            query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-            try:
-                task = query.one()
-            except sqlalchemy.orm.exc.NoResultFound:
-                send_message("_404_ Task {} not found x.x".format(task_id), chat)
+            task = treatException(task_id, chat)
+            if task == 1:
                 return
 
         dtask = Task(chat=task.chat, name=task.name, status=task.status, dependencies=task.dependencies,
@@ -274,7 +280,6 @@ def handle_updates(updates):
             moveToDone(msg, chat)
         elif command == '/list':
             list(chat)
-
         elif command == '/dependson':
             text = ''
             if msg != '':

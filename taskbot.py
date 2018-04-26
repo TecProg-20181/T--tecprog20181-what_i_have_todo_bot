@@ -99,6 +99,12 @@ def treatException(task_id, chat):
         return 1
     return task
 
+def new(msg, chat):
+    task = Task(chat=chat, name=msg, status='TODO', dependencies='', parents='', priority='')
+    db.session.add(task)
+    db.session.commit()
+    send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
+
 def duplicateTask(msg, chat):
         if not msg.isdigit():
             send_message("You must inform the task id", chat)
@@ -257,10 +263,7 @@ def handle_updates(updates):
         print(command, msg, chat)
 
         if command == '/new':
-            task = Task(chat=chat, name=msg, status='TODO', dependencies='', parents='', priority='')
-            db.session.add(task)
-            db.session.commit()
-            send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
+            new(msg, chat)
 
         elif command == '/rename':
             text = ''
@@ -290,6 +293,7 @@ def handle_updates(updates):
                 send_message("Task {} redefined from {} to {}".format(task_id, old_text, text), chat)
         elif command == '/duplicate':
             duplicateTask(msg, chat)
+
         elif command == '/delete':
             delete(msg, chat)
 

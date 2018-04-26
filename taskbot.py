@@ -131,11 +131,8 @@ def moveTask(command, msg, chat):
         send_message("You must inform the task id", chat)
     else:
         task_id = int(msg)
-        query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
+        task = treatException(task_id, chat)
+        if task == 1:
             return
     task.status = command.upper()[1:]
     db.session.commit()
@@ -147,12 +144,10 @@ def delete(msg, chat):
         send_message("You must inform the task id", chat)
     else:
         task_id = int(msg)
-        query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
+        task = treatException(task_id, chat)
+        if task == 1:
             return
+            
         for t in task.dependencies.split(',')[:-1]:
             qy = db.session.query(Task).filter_by(id=int(t), chat=chat)
             t = qy.one()
@@ -206,11 +201,8 @@ def dependson(msg, chat):
         send_message("You must inform the task id", chat)
     else:
         task_id = int(msg)
-        query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
+        task = treatException(task_id, chat)
+        if task == 1:
             return
 
         if text == '':
@@ -276,11 +268,8 @@ def handle_updates(updates):
                 send_message("You must inform the task id", chat)
             else:
                 task_id = int(msg)
-                query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-                try:
-                    task = query.one()
-                except sqlalchemy.orm.exc.NoResultFound:
-                    send_message("_404_ Task {} not found x.x".format(task_id), chat)
+                task = treatException(task_id, chat)
+                if task == 1:
                     return
 
                 if text == '':
@@ -323,11 +312,8 @@ def handle_updates(updates):
                 send_message("You must inform the task id", chat)
             else:
                 task_id = int(msg)
-                query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-                try:
-                    task = query.one()
-                except sqlalchemy.orm.exc.NoResultFound:
-                    send_message("_404_ Task {} not found x.x".format(task_id), chat)
+                task = treatException(task_id, chat)
+                if task == 1:
                     return
 
                 if text == '':

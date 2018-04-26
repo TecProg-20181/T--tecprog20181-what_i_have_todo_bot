@@ -120,7 +120,7 @@ def duplicateTask(msg, chat):
         db.session.commit()
         send_message("New task *TODO* [[{}]] {}".format(dtask.id, dtask.name), chat)
 
-def moveToDone(msg, chat):
+def moveTask(command, msg, chat):
     if not msg.isdigit():
         send_message("You must inform the task id", chat)
     else:
@@ -131,10 +131,9 @@ def moveToDone(msg, chat):
         except sqlalchemy.orm.exc.NoResultFound:
             send_message("_404_ Task {} not found x.x".format(task_id), chat)
             return
-    task.status = 'DONE'
+    task.status = command.upper()[1:]
     db.session.commit()
-    send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
-
+    send_message("*"+task.status+"* task [[{}]] {}".format(task.id, task.name), chat)
 
 def delete(msg, chat):
 
@@ -247,37 +246,14 @@ def handle_updates(updates):
             delete(msg, chat)
 
         elif command == '/todo':
-            if not msg.isdigit():
-                send_message("You must inform the task id", chat)
-            else:
-                task_id = int(msg)
-                query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-                try:
-                    task = query.one()
-                except sqlalchemy.orm.exc.NoResultFound:
-                    send_message("_404_ Task {} not found x.x".format(task_id), chat)
-                    return
-                task.status = 'TODO'
-                db.session.commit()
-                send_message("*TODO* task [[{}]] {}".format(task.id, task.name), chat)
+            moveTask(command, msg, chat)
 
         elif command == '/doing':
-            if not msg.isdigit():
-                send_message("You must inform the task id", chat)
-            else:
-                task_id = int(msg)
-                query = db.session.query(Task).filter_by(id=task_id, chat=chat)
-                try:
-                    task = query.one()
-                except sqlalchemy.orm.exc.NoResultFound:
-                    send_message("_404_ Task {} not found x.x".format(task_id), chat)
-                    return
-                task.status = 'DOING'
-                db.session.commit()
-                send_message("*DOING* task [[{}]] {}".format(task.id, task.name), chat)
+            moveTask(command, msg, chat)
 
         elif command == '/done':
-            moveToDone(msg, chat)
+            moveTask(command, msg, chat)
+            
         elif command == '/list':
             list(chat)
         elif command == '/dependson':

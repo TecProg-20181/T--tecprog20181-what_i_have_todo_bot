@@ -105,56 +105,44 @@ def new(msg, chat):
     db.session.commit()
     send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
 
-def duplicateTask(msg, chat):
-        if not msg.isdigit():
-            send_message("You must inform the task id", chat)
-        else:
-            task_id = int(msg)
-            task = treatException(task_id, chat)
-            if task == 1:
-                return
+def duplicateTask(task_id, chat):
+    task = treatException(task_id, chat)
+    if task == 1:
+        return
 
-        dtask = Task(chat=task.chat, name=task.name, status=task.status, dependencies=task.dependencies,
-                        parents=task.parents, priority=task.priority, duedate=task.duedate)
-        db.session.add(dtask)
+    dtask = Task(chat=task.chat, name=task.name, status=task.status, dependencies=task.dependencies,
+                    parents=task.parents, priority=task.priority, duedate=task.duedate)
+    db.session.add(dtask)
 
-        for t in task.dependencies.split(',')[:-1]:
-            qy = db.session.query(Task).filter_by(id=int(t), chat=chat)
-            t = qy.one()
-            t.parents += '{},'.format(dtask.id)
+    for t in task.dependencies.split(',')[:-1]:
+        qy = db.session.query(Task).filter_by(id=int(t), chat=chat)
+        t = qy.one()
+        t.parents += '{},'.format(dtask.id)
 
-        db.session.commit()
-        send_message("New task *TODO* [[{}]] {}".format(dtask.id, dtask.name), chat)
+    db.session.commit()
+    send_message("New task *TODO* [[{}]] {}".format(dtask.id, dtask.name), chat)
 
-def moveTask(command, msg, chat):
-    if not msg.isdigit():
-        send_message("You must inform the task id", chat)
-    else:
-        task_id = int(msg)
-        task = treatException(task_id, chat)
-        if task == 1:
-            return
+def moveTask(command, task_id, chat):
+    task = treatException(task_id, chat)
+    if task == 1:
+        return
     task.status = command.upper()[1:]
     db.session.commit()
     send_message("*"+task.status+"* task [[{}]] {}".format(task.id, task.name), chat)
 
-def delete(msg, chat):
+def delete(task_id, chat):
 
-    if not msg.isdigit():
-        send_message("You must inform the task id", chat)
-    else:
-        task_id = int(msg)
-        task = treatException(task_id, chat)
-        if task == 1:
-            return
-            
-        for t in task.dependencies.split(',')[:-1]:
-            qy = db.session.query(Task).filter_by(id=int(t), chat=chat)
-            t = qy.one()
-            t.parents = t.parents.replace('{},'.format(task.id), '')
-        db.session.delete(task)
-        db.session.commit()
-        send_message("Task [[{}]] deleted".format(task_id), chat)
+    task = treatException(task_id, chat)
+    if task == 1:
+        return
+        
+    for t in task.dependencies.split(',')[:-1]:
+        qy = db.session.query(Task).filter_by(id=int(t), chat=chat)
+        t = qy.one()
+        t.parents = t.parents.replace('{},'.format(task.id), '')
+    db.session.delete(task)
+    db.session.commit()
+    send_message("Task [[{}]] deleted".format(task_id), chat)
 
 def list(chat):
     a = ''
@@ -235,6 +223,7 @@ def dependson(msg, chat):
         db.session.commit()
         send_message("Task {} dependencies up to date".format(task_id), chat)
 
+
 def handle_updates(updates):
     for update in updates["result"]:
         if 'message' in update:
@@ -254,55 +243,28 @@ def handle_updates(updates):
 
         print(command, msg, chat)
 
-        if command == '/new':
+        if command not in HELP:
+            send_message("I'm sorry dave. I'm afraid I can't do that.", chat)
+            return
+
+        elif command == '/new':
             new(msg, chat)
-
-        elif command == '/rename':
-            text = ''
-            if msg != '':
-                if len(msg.split(' ', 1)) > 1:
-                    text = msg.split(' ', 1)[1]
-                msg = msg.split(' ', 1)[0]
-
-            if not msg.isdigit():
-                send_message("You must inform the task id", chat)
-            else:
-                task_id = int(msg)
-                task = treatException(task_id, chat)
-                if task == 1:
-                    return
-
-                if text == '':
-                    send_message("You want to modify task {}, but you didn't provide any new text".format(task_id), chat)
-                    return
-
-                old_text = task.name
-                task.name = text
-                db.session.commit()
-                send_message("Task {} redefined from {} to {}".format(task_id, old_text, text), chat)
-        elif command == '/duplicate':
-            duplicateTask(msg, chat)
-
-        elif command == '/delete':
-            delete(msg, chat)
-
-        elif command == '/todo':
-            moveTask(command, msg, chat)
-
-        elif command == '/doing':
-            moveTask(command, msg, chat)
-
-        elif command == '/done':
-            moveTask(command, msg, chat)
 
         elif command == '/list':
             list(chat)
 
-        elif command == '/dependson':
-            dependson(msg, chat)
+        elif command == '/start':
+            send_message("Welcome! Here is a list of things you can do.", chat)
+            send_message(HELP, chat)
+            
+        elif command == '/help':
+            send_message("Here is a list of things you can do.", chat)
+            send_message(HELP, chat)
 
-        elif command == '/priority':
-            text = ''
+        elif command == '/dependson':
+                dependson(msg, chat)
+
+        else: 
             if msg != '':
                 if len(msg.split(' ', 1)) > 1:
                     text = msg.split(' ', 1)[1]
@@ -310,32 +272,54 @@ def handle_updates(updates):
 
             if not msg.isdigit():
                 send_message("You must inform the task id", chat)
+
             else:
                 task_id = int(msg)
-                task = treatException(task_id, chat)
-                if task == 1:
-                    return
 
-                if text == '':
-                    task.priority = ''
-                    send_message("_Cleared_ all priorities from task {}".format(task_id), chat)
-                else:
-                    if text.lower() not in ['high', 'medium', 'low']:
-                        send_message("The priority *must be* one of the following: high, medium, low", chat)
+                if command == '/duplicate':
+                    duplicateTask(task_id, chat)
+
+                elif command == '/delete':
+                    delete(task_id, chat)
+
+                elif command == '/todo':
+                    moveTask(command, task_id, chat)
+
+                elif command == '/doing':
+                    moveTask(command, task_id, chat)
+
+                elif command == '/done':
+                    moveTask(command, task_id, chat)
+
+                elif command == '/rename':
+                    task = treatException(task_id, chat)
+                    if task == 1:
+                        return
+
+                    if text == '':
+                        send_message("You want to modify task {}, but you didn't provide any new text".format(task_id), chat)
+                        return
+
+                    old_text = task.name
+                    task.name = text
+                    db.session.commit()
+                    send_message("Task {} redefined from {} to {}".format(task_id, old_text, text), chat)
+
+                elif command == '/priority':
+                    task = treatException(task_id, chat)
+                    if task == 1:
+                        return
+
+                    if text == '':
+                        task.priority = ''
+                        send_message("_Cleared_ all priorities from task {}".format(task_id), chat)
                     else:
-                        task.priority = text.lower()
-                        send_message("*Task {}* priority has priority *{}*".format(task_id, text.lower()), chat)
-                db.session.commit()
-
-        elif command == '/start':
-            send_message("Welcome! Here is a list of things you can do.", chat)
-            send_message(HELP, chat)
-        elif command == '/help':
-            send_message("Here is a list of things you can do.", chat)
-            send_message(HELP, chat)
-        else:
-            send_message("I'm sorry dave. I'm afraid I can't do that.", chat)
-
+                        if text.lower() not in ['high', 'medium', 'low']:
+                            send_message("The priority *must be* one of the following: high, medium, low", chat)
+                        else:
+                            task.priority = text.lower()
+                            send_message("*Task {}* priority has priority *{}*".format(task_id, text.lower()), chat)
+                    db.session.commit()
 
 def main():
     last_update_id = None

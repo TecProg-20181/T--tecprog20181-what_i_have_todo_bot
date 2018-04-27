@@ -27,6 +27,10 @@ HELP = """
  /help
 """
 
+COMMANDS = [' /new ', ' /todo ', ' /doing ', ' /done ',
+           ' /delete ', ' /list ', ' /rename ', ' /help ', 
+           ' /dependson ', ' /duplicate ', ' /priority ']
+
 def readToken():
     inFile = open(TOKEN, 'r')
     line = inFile.readline()
@@ -98,6 +102,13 @@ def treatException(task_id, chat):
         send_message("_404_ Task {} not found x.x".format(task_id), chat)
         return 1
     return task
+def splitDualInput(msg, text):    
+    if msg != '':
+        text = ''
+        if len(msg.split(' ', 1)) > 1:
+            text = msg.split(' ', 1)[1]
+        msg = msg.split(' ', 1)[0]
+    return msg, text
 
 def new(msg, chat):
     task = Task(chat=chat, name=msg, status='TODO', dependencies='', parents='', priority='')
@@ -178,50 +189,40 @@ def list(chat):
 
     send_message(a, chat)
 
-def dependson(msg, chat):
-    text = ''
-    if msg != '':
-        if len(msg.split(' ', 1)) > 1:
-            text = msg.split(' ', 1)[1]
-        msg = msg.split(' ', 1)[0]
+def dependson(text, task_id, chat):
+    task = treatException(task_id, chat)
+    if task == 1:
+        return
 
-    if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+    if text == '':
+        for i in task.dependencies.split(',')[:-1]:
+            i = int(i)
+            q = db.session.query(Task).filter_by(id=i, chat=chat)
+            t = q.one()
+            t.parents = t.parents.replace('{},'.format(task.id), '')
+
+        task.dependencies = ''
+        send_message("Dependencies removed from task {}".format(task_id), chat)
     else:
-        task_id = int(msg)
-        task = treatException(task_id, chat)
-        if task == 1:
-            return
+        for depid in text.split(' '):
+            if not depid.isdigit():
+                send_message("All dependencies ids must be numeric, and not {}".format(depid), chat)
+            else:
+                depid = int(depid)
+                query = db.session.query(Task).filter_by(id=depid, chat=chat)
+                try:
+                    taskdep = query.one()
+                    taskdep.parents += str(task.id) + ','
+                except sqlalchemy.orm.exc.NoResultFound:
+                    send_message("_404_ Task {} not found x.x".format(depid), chat)
+                    continue
 
-        if text == '':
-            for i in task.dependencies.split(',')[:-1]:
-                i = int(i)
-                q = db.session.query(Task).filter_by(id=i, chat=chat)
-                t = q.one()
-                t.parents = t.parents.replace('{},'.format(task.id), '')
+                deplist = task.dependencies.split(',')
+                if str(depid) not in deplist:
+                    task.dependencies += str(depid) + ','
 
-            task.dependencies = ''
-            send_message("Dependencies removed from task {}".format(task_id), chat)
-        else:
-            for depid in text.split(' '):
-                if not depid.isdigit():
-                    send_message("All dependencies ids must be numeric, and not {}".format(depid), chat)
-                else:
-                    depid = int(depid)
-                    query = db.session.query(Task).filter_by(id=depid, chat=chat)
-                    try:
-                        taskdep = query.one()
-                        taskdep.parents += str(task.id) + ','
-                    except sqlalchemy.orm.exc.NoResultFound:
-                        send_message("_404_ Task {} not found x.x".format(depid), chat)
-                        continue
-
-                    deplist = task.dependencies.split(',')
-                    if str(depid) not in deplist:
-                        task.dependencies += str(depid) + ','
-
-        db.session.commit()
-        send_message("Task {} dependencies up to date".format(task_id), chat)
+    db.session.commit()
+    send_message("Task {} dependencies up to date".format(task_id), chat)
 
 def renameTask(text, task_id, chat):
     task = treatException(task_id, chat)
@@ -269,10 +270,10 @@ def handle_updates(updates):
             msg = message["text"].split(" ", 1)[1].strip()
 
         chat = message["chat"]["id"]
-
+        text = ''
         print(command, msg, chat)
 
-        if command not in HELP:
+        if ' '+command+' ' not in COMMANDS:
             send_message("I'm sorry dave. I'm afraid I can't do that.", chat)
             return
 
@@ -290,14 +291,10 @@ def handle_updates(updates):
             send_message("Here is a list of things you can do.", chat)
             send_message(HELP, chat)
 
-        elif command == '/dependson':
-                dependson(msg, chat)
 
         else: 
-            if msg != '':
-                if len(msg.split(' ', 1)) > 1:
-                    text = msg.split(' ', 1)[1]
-                msg = msg.split(' ', 1)[0]
+            if command in ['/dependson', '/priority', '/rename']:
+                msg, text = splitDualInput(msg, text)
 
             if not msg.isdigit():
                 send_message("You must inform the task id", chat)
@@ -326,6 +323,8 @@ def handle_updates(updates):
                 elif command == '/priority':
                     priorityTask(text, task_id, chat)
 
+                elif command == '/dependson':
+                    dependson(text, task_id, chat)
 def main():
     last_update_id = None
 

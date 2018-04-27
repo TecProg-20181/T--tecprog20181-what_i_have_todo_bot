@@ -237,6 +237,22 @@ def renameTask(text, task_id, chat):
     db.session.commit()
     send_message("Task {} redefined from {} to {}".format(task_id, old_text, text), chat)
 
+def priorityTask(text, task_id, chat):
+    task = treatException(task_id, chat)
+    if task == 1:
+        return
+
+    if text == '':
+        task.priority = ''
+        send_message("_Cleared_ all priorities from task {}".format(task_id), chat)
+    else:
+        if text.lower() not in ['high', 'medium', 'low']:
+            send_message("The priority *must be* one of the following: high, medium, low", chat)
+        else:
+            task.priority = text.lower()
+            send_message("*Task {}* priority has priority *{}*".format(task_id, text.lower()), chat)
+    db.session.commit() 
+
 def handle_updates(updates):
     for update in updates["result"]:
         if 'message' in update:
@@ -307,22 +323,8 @@ def handle_updates(updates):
                 elif command == '/rename':
                     renameTask(text, task_id, chat)
 
-
                 elif command == '/priority':
-                    task = treatException(task_id, chat)
-                    if task == 1:
-                        return
-
-                    if text == '':
-                        task.priority = ''
-                        send_message("_Cleared_ all priorities from task {}".format(task_id), chat)
-                    else:
-                        if text.lower() not in ['high', 'medium', 'low']:
-                            send_message("The priority *must be* one of the following: high, medium, low", chat)
-                        else:
-                            task.priority = text.lower()
-                            send_message("*Task {}* priority has priority *{}*".format(task_id, text.lower()), chat)
-                    db.session.commit()
+                    priorityTask(text, task_id, chat)
 
 def main():
     last_update_id = None

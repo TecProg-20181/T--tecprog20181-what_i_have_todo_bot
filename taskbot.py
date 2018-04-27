@@ -104,7 +104,6 @@ def treatException(task_id, chat):
     return task
 def splitDualInput(msg, text):    
     if msg != '':
-        text = ''
         if len(msg.split(' ', 1)) > 1:
             text = msg.split(' ', 1)[1]
         msg = msg.split(' ', 1)[0]
@@ -303,6 +302,7 @@ def handle_updates(updates):
 
         else: 
             if command in ['/dependson', '/priority', '/rename']:
+                text = ''
                 msg, text = splitDualInput(msg, text)
 
             if not msg.isdigit():

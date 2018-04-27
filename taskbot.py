@@ -223,6 +223,19 @@ def dependson(msg, chat):
         db.session.commit()
         send_message("Task {} dependencies up to date".format(task_id), chat)
 
+def renameTask(text, task_id, chat):
+    task = treatException(task_id, chat)
+    if task == 1:
+        return
+
+    if text == '':
+        send_message("You want to modify task {}, but you didn't provide any new text".format(task_id), chat)
+        return
+                    
+    old_text = task.name
+    task.name = text
+    db.session.commit()
+    send_message("Task {} redefined from {} to {}".format(task_id, old_text, text), chat)
 
 def handle_updates(updates):
     for update in updates["result"]:
@@ -292,18 +305,8 @@ def handle_updates(updates):
                     moveTask(command, task_id, chat)
 
                 elif command == '/rename':
-                    task = treatException(task_id, chat)
-                    if task == 1:
-                        return
+                    renameTask(text, task_id, chat)
 
-                    if text == '':
-                        send_message("You want to modify task {}, but you didn't provide any new text".format(task_id), chat)
-                        return
-
-                    old_text = task.name
-                    task.name = text
-                    db.session.commit()
-                    send_message("Task {} redefined from {} to {}".format(task_id, old_text, text), chat)
 
                 elif command == '/priority':
                     task = treatException(task_id, chat)

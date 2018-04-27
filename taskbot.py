@@ -110,7 +110,7 @@ def splitDualInput(msg, text):
         msg = msg.split(' ', 1)[0]
     return msg, text
 
-def new(msg, chat):
+def createTask(msg, chat):
     task = Task(chat=chat, name=msg, status='TODO', dependencies='', parents='', priority='')
     db.session.add(task)
     db.session.commit()
@@ -141,7 +141,7 @@ def moveTask(command, task_id, chat):
     db.session.commit()
     send_message("*"+task.status+"* task [[{}]] {}".format(task.id, task.name), chat)
 
-def delete(task_id, chat):
+def deleteTask(task_id, chat):
 
     task = treatException(task_id, chat)
     if task == 1:
@@ -155,7 +155,7 @@ def delete(task_id, chat):
     db.session.commit()
     send_message("Task [[{}]] deleted".format(task_id), chat)
 
-def list(chat):
+def showTaskList(chat):
     a = ''
 
     a += '\U0001F4CB Task List\n'
@@ -254,23 +254,32 @@ def priorityTask(text, task_id, chat):
             send_message("*Task {}* priority has priority *{}*".format(task_id, text.lower()), chat)
     db.session.commit() 
 
+def gettingMessage(update):
+    if 'message' in update:
+        message = update['message']
+    elif 'edited_message' in update:
+        message = update['edited_message']
+    else:
+        print('Can\'t process! {}'.format(update))
+        return
+
+    command = message["text"].split(" ", 1)[0]
+    msg = ''
+    if len(message["text"].split(" ", 1)) > 1:
+        msg = message["text"].split(" ", 1)[1].strip()
+
+    chat = message["chat"]["id"]
+
+    return {'command':command, 'msg':msg ,'chat':chat }
+
 def handle_updates(updates):
     for update in updates["result"]:
-        if 'message' in update:
-            message = update['message']
-        elif 'edited_message' in update:
-            message = update['edited_message']
-        else:
-            print('Can\'t process! {}'.format(update))
-            return
+        newMessage = gettingMessage(update)
+        
+        command = newMessage.get('command')
+        msg = newMessage.get('msg')
+        chat = newMessage.get('chat')
 
-        command = message["text"].split(" ", 1)[0]
-        msg = ''
-        if len(message["text"].split(" ", 1)) > 1:
-            msg = message["text"].split(" ", 1)[1].strip()
-
-        chat = message["chat"]["id"]
-        text = ''
         print(command, msg, chat)
 
         if ' '+command+' ' not in COMMANDS:
@@ -278,10 +287,10 @@ def handle_updates(updates):
             return
 
         elif command == '/new':
-            new(msg, chat)
+            createTask(msg, chat)
 
         elif command == '/list':
-            list(chat)
+            showTaskList(chat)
 
         elif command == '/start':
             send_message("Welcome! Here is a list of things you can do.", chat)
@@ -306,7 +315,7 @@ def handle_updates(updates):
                     duplicateTask(task_id, chat)
 
                 elif command == '/delete':
-                    delete(task_id, chat)
+                    deleteTask(task_id, chat)
 
                 elif command == '/todo':
                     moveTask(command, task_id, chat)

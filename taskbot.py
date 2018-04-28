@@ -11,7 +11,7 @@ import sqlalchemy
 import db
 from db import Task
 
-TOKEN = "tokenBot.txt"
+from Classes.token import Token
 
 HELP = """
  /new NOME
@@ -31,12 +31,7 @@ COMMANDS = [' /new ', ' /todo ', ' /doing ', ' /done ',
            ' /delete ', ' /list ', ' /rename ', ' /help ', 
            ' /dependson ', ' /duplicate ', ' /priority ']
 
-def readToken():
-    inFile = open(TOKEN, 'r')
-    line = inFile.readline()
-    return line.rstrip()
-
-URL = "https://api.telegram.org/bot{}/".format(readToken())
+URL = Token().getToken()
 
 def get_url(url):
     response = requests.get(url)

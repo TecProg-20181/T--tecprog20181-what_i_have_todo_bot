@@ -4,7 +4,6 @@ import time
 import string
 from Classes.connection import Connection
 from Classes.task import Tasks
-import sqlalchemy
 
 import db
 from db import Task

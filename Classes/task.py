@@ -1,3 +1,5 @@
+import sqlalchemy
+
 import db
 from db import Task
 from Classes.connection import Connection
@@ -67,7 +69,7 @@ class Tasks():
         for t in self.task.dependencies.split(',')[:-1]:
             self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
             t = self.qy.one()
-            t.parents += '{},'.format(dtask.id)
+            t.parents += '{},'.format(self.dtask.id)
 
         db.session.commit()
         CONNECTION.sendMessage("New task *TODO* [[{}]] {}".format(self.dtask.id, self.dtask.name), chat)
@@ -105,7 +107,7 @@ class Tasks():
             elif self.task.status == 'DONE':
                 self.icon = '\U00002611'
 
-            self.a += '[[{}]] {} {}\n'.format(self.task.id, self.icon, self.task.name)
+            self.a += '[[{}]] {} {} {}\n'.format(self.task.id, self.icon, self.task.name, self.task.priority)
             self.a += self.deps_text(self.task, chat)
 
         CONNECTION.sendMessage(self.a, chat)
@@ -114,15 +116,15 @@ class Tasks():
         self.a += '\U0001F4DD _Status_\n'
         self.query = db.session.query(db.Task).filter_by(status='TODO', chat=chat).order_by(db.Task.id)
         self.a += '\n\U0001F195 *TODO*\n'
-        for task in self.query.all():
+        for self.task in self.query.all():
             self.a += '[[{}]] {}\n'.format(self.task.id, self.task.name)
         self.query = db.session.query(db.Task).filter_by(status='DOING', chat=chat).order_by(db.Task.id)
         self.a += '\n\U000023FA *DOING*\n'
-        for task in self.query.all():
+        for self.task in self.query.all():
             self.a += '[[{}]] {}\n'.format(self.task.id, self.task.name)
         self.query = db.session.query(db.Task).filter_by(status='DONE', chat=chat).order_by(db.Task.id)
         self.a += '\n\U00002611 *DONE*\n'
-        for task in self.query.all():
+        for self.task in self.query.all():
             self.a += '[[{}]] {}\n'.format(self.task.id, self.task.name)
 
         CONNECTION.sendMessage(self.a, chat)
@@ -188,6 +190,11 @@ class Tasks():
             if text.lower() not in ['high', 'medium', 'low']:
                 CONNECTION.sendMessage("The priority *must be* one of the following: high, medium, low", chat)
             else:
-                self.task.priority = text.lower()
+                if text.lower() == 'high':
+                    self.task.priority = '\U0001F947'
+                elif text.lower() == 'medium':
+                    self.task.priority = '\U0001F948'
+                else:
+                    self.task.priority = '\U0001F949'
                 CONNECTION.sendMessage("*Task {}* priority has priority *{}*".format(task_id, text.lower()), chat)
         db.session.commit() 

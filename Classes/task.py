@@ -24,11 +24,11 @@ class Tasks():
                 icon = '\U00002611'
 
             if i + 1 == len(task.dependencies.split(',')[:-1]):
-                self.line += '└── [[{}]] {} {} {}\n'.format(self.dep.id, self.icon, self.dep.name, self.dep.priority)
-                self.line += self.deps_text(self.dep, chat, preceed + '    ')
+                line += '└── [[{}]] {} {} {}\n'.format(dep.id, icon, dep.name, dep.priority)
+                line += self.deps_text(dep, chat, preceed + '    ')
             else:
-                self.line += '├── [[{}]] {} {} {}\n'.format(self.dep.id, self.icon, self.dep.name, self.dep.priority)
-                self.line += self.deps_text(self.dep, chat, preceed + '│   ')
+                line += '├── [[{}]] {} {} {}\n'.format(dep.id, icon, dep.name, dep.priority)
+                line += self.deps_text(dep, chat, preceed + '│   ')
 
             text += line
 
@@ -136,6 +136,9 @@ class Tasks():
         self.task = self.treatException(task_id, chat)
         if self.task == 1:
             return
+        print(text)
+        print(task_id)
+        print("**************************************************************************")
         if text == '':
             for i in self.task.dependencies.split(',')[:-1]:
                 i = int(i)
@@ -156,7 +159,7 @@ class Tasks():
                         self.taskdep = self.query.one()
                         self.dependencyList = self.taskdep.dependencies.split(',')
                         hasCircularDependency = False
-                        if not str(self.task.id) in self.dependencyList and task_id == text:
+                        if not str(self.task.id) in self.dependencyList and int(task_id) != int(text):
                             self.taskdep.parents += str(self.task.id) + ','
                         else:
                             CONNECTION.sendMessage("This task already depends on other", chat)

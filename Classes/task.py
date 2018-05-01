@@ -11,28 +11,28 @@ class Tasks():
         pass
 
     def deps_text(self, task, chat, preceed=''):
-        self.text = ''
+        text = ''
         for i in range(len(task.dependencies.split(',')[:-1])):
-            self.line = preceed
-            self.query = db.session.query(db.Task).filter_by(id=int(task.dependencies.split(',')[:-1][i]), chat=chat)
-            self.dep = self.query.one()
+            line = preceed
+            query = db.session.query(db.Task).filter_by(id=int(task.dependencies.split(',')[:-1][i]), chat=chat)
+            dep = query.one()
 
-            self.icon = '\U0001F195'
-            if self.dep.status == 'DOING':
-                self.icon = '\U000023FA'
-            elif self.dep.status == 'DONE':
-                self.icon = '\U00002611'
+            icon = '\U0001F195'
+            if dep.status == 'DOING':
+                icon = '\U000023FA'
+            elif dep.status == 'DONE':
+                icon = '\U00002611'
 
             if i + 1 == len(task.dependencies.split(',')[:-1]):
-                self.line += '└── [[{}]] {} {}\n'.format(self.dep.id, self.icon, self.dep.name)
-                self.line += self.deps_text(self.dep, chat, preceed + '    ')
+                line += '└── [[{}]] {} {}\n'.format(dep.id, icon, dep.name)
+                line += self.deps_text(dep, chat, preceed + '    ')
             else:
-                self.line += '├── [[{}]] {} {}\n'.format(self.dep.id, self.icon, self.dep.name)
-                self.line += self.deps_text(self.dep, chat, preceed + '│   ')
+                line += '├── [[{}]] {} {}\n'.format(dep.id, icon, dep.name)
+                line += self.deps_text(dep, chat, preceed + '│   ')
 
-            self.text += self.line
+            text += line
 
-        return self.text
+        return text
 
     def treatException(self, task_id, chat):
         self.query = db.session.query(db.Task).filter_by(id=task_id, chat=chat)
@@ -43,8 +43,8 @@ class Tasks():
             return 1
         return self.task
 
-        
-    def splitDualInput(self, msg, text):    
+
+    def splitDualInput(self, msg, text):
         if msg != '':
             if len(msg.split(' ', 1)) > 1:
                 text = msg.split(' ', 1)[1]
@@ -86,7 +86,7 @@ class Tasks():
         self.task = self.treatException(task_id, chat)
         if self.task == 1:
             return
-            
+
         for t in self.task.dependencies.split(',')[:-1]:
             self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
             t = self.qy.one()
@@ -133,7 +133,6 @@ class Tasks():
         self.task = self.treatException(task_id, chat)
         if self.task == 1:
             return
-
         if text == '':
             for i in self.task.dependencies.split(',')[:-1]:
                 i = int(i)
@@ -152,17 +151,25 @@ class Tasks():
                     self.query = db.session.query(db.Task).filter_by(id=depid, chat=chat)
                     try:
                         self.taskdep = self.query.one()
-                        self.taskdep.parents += str(self.task.id) + ','
+                        self.dependencyList = self.taskdep.dependencies.split(',')
+                        hasCircularDependency = False
+                        if not str(self.task.id) in self.dependencyList and task_id == text:
+                            self.taskdep.parents += str(self.task.id) + ','
+                        else:
+                            CONNECTION.sendMessage("This task already depends on other", chat)
+                            hasCircularDependency = True
+
                     except sqlalchemy.orm.exc.NoResultFound:
                         CONNECTION.sendMessage("_404_ Task {} not found x.x".format(depid), chat)
                         continue
 
-                    self.deplist = self.task.dependencies.split(',')
-                    if str(depid) not in self.deplist:
-                        self.task.dependencies += str(depid) + ','
+                    if(hasCircularDependency == False):
+                        self.deplist = self.task.dependencies.split(',')
+                        if str(depid) not in self.deplist:
+                            self.task.dependencies += str(depid) + ','
+                        CONNECTION.sendMessage("Task {} dependencies up to date".format(task_id), chat)
 
         db.session.commit()
-        CONNECTION.sendMessage("Task {} dependencies up to date".format(task_id), chat)
 
     def renameTask(self, text, task_id, chat):
         self.task = self.treatException(task_id, chat)
@@ -172,7 +179,7 @@ class Tasks():
         if text == '':
             CONNECTION.sendMessage("You want to modify task {}, but you didn't provide any new text".format(task_id), chat)
             return
-                        
+
         self.old_text = self.task.name
         self.task.name = text
         db.session.commit()
@@ -197,4 +204,4 @@ class Tasks():
                 else:
                     self.task.priority = '\U0001F949'
                 CONNECTION.sendMessage("*Task {}* priority has priority *{}*".format(task_id, text.lower()), chat)
-        db.session.commit() 
+        db.session.commit()

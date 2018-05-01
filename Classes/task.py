@@ -136,9 +136,6 @@ class Tasks():
         self.task = self.treatException(task_id, chat)
         if self.task == 1:
             return
-        print(text)
-        print(task_id)
-        print("**************************************************************************")
         if text == '':
             for i in self.task.dependencies.split(',')[:-1]:
                 i = int(i)

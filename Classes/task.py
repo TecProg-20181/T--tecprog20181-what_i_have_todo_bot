@@ -24,11 +24,11 @@ class Tasks():
                 icon = '\U00002611'
 
             if i + 1 == len(task.dependencies.split(',')[:-1]):
-                line += '└── [[{}]] {} {}\n'.format(dep.id, icon, dep.name)
-                line += self.deps_text(dep, chat, preceed + '    ')
+                self.line += '└── [[{}]] {} {} {}\n'.format(self.dep.id, self.icon, self.dep.name, self.dep.priority)
+                self.line += self.deps_text(self.dep, chat, preceed + '    ')
             else:
-                line += '├── [[{}]] {} {}\n'.format(dep.id, icon, dep.name)
-                line += self.deps_text(dep, chat, preceed + '│   ')
+                self.line += '├── [[{}]] {} {} {}\n'.format(self.dep.id, self.icon, self.dep.name, self.dep.priority)
+                self.line += self.deps_text(self.dep, chat, preceed + '│   ')
 
             text += line
 
@@ -87,6 +87,9 @@ class Tasks():
         if self.task == 1:
             return
 
+        if self.task.parents != '':
+            CONNECTION.sendMessage("There are dependencies to perform this task, finish them first", chat)
+            return
         for t in self.task.dependencies.split(',')[:-1]:
             self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
             t = self.qy.one()
@@ -117,15 +120,15 @@ class Tasks():
         self.query = db.session.query(db.Task).filter_by(status='TODO', chat=chat).order_by(db.Task.id)
         self.a += '\n\U0001F195 *TODO*\n'
         for self.task in self.query.all():
-            self.a += '[[{}]] {}\n'.format(self.task.id, self.task.name)
+            self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
         self.query = db.session.query(db.Task).filter_by(status='DOING', chat=chat).order_by(db.Task.id)
         self.a += '\n\U000023FA *DOING*\n'
         for self.task in self.query.all():
-            self.a += '[[{}]] {}\n'.format(self.task.id, self.task.name)
+            self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
         self.query = db.session.query(db.Task).filter_by(status='DONE', chat=chat).order_by(db.Task.id)
         self.a += '\n\U00002611 *DONE*\n'
         for self.task in self.query.all():
-            self.a += '[[{}]] {}\n'.format(self.task.id, self.task.name)
+            self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
 
         CONNECTION.sendMessage(self.a, chat)
 

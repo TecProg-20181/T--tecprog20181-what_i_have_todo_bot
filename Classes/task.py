@@ -43,14 +43,6 @@ class Tasks():
             return 1
         return self.task
 
-
-    def splitDualInput(self, msg, text):
-        if msg != '':
-            if len(msg.split(' ', 1)) > 1:
-                text = msg.split(' ', 1)[1]
-            msg = msg.split(' ', 1)[0]
-        return msg, text
-
     def createTask(self, msg, chat):
         self.task = db.Task(chat=chat, name=msg, status='TODO', dependencies='', parents='', priority='')
         db.session.add(self.task)

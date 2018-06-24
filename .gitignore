@@ -1,7 +1,9 @@
 db.sqlite3
 
-## Token ##
+## Token/Login ##
 tokenBot.txt
+login.txt
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/

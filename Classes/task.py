@@ -67,12 +67,15 @@ class Tasks():
         CONNECTION.sendMessage("New task *TODO* [[{}]] {}".format(self.dtask.id, self.dtask.name), chat)
 
     def moveTask(self, command, task_id, chat):
-        self.task = self.treatException(task_id, chat)
-        if self.task == 1:
-            return
-        self.task.status = command.upper()[1:]
-        db.session.commit()
-        CONNECTION.sendMessage("*"+self.task.status+"* task [[{}]] {}".format(self.task.id, self.task.name), chat)
+        count = 0
+        while count < len(task_id):
+            self.task = self.treatException(task_id[count], chat)
+            if self.task == 1:
+                return
+            self.task.status = command.upper()[1:]
+            db.session.commit()
+            CONNECTION.sendMessage("*"+self.task.status+"* task [[{}]] {}".format(self.task.id, self.task.name), chat)
+            count = count + 1
 
     def deleteTask(self, task_id, chat):
         self.task = self.treatException(task_id, chat)

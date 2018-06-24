@@ -42,6 +42,8 @@ def splitDualInput(msg, text):
         msg = msg.split(' ', 1)[0]
     return msg, text
 
+    
+
 def gettingMessage(update):
     if 'message' in update:
         message = update['message']
@@ -94,35 +96,34 @@ def handle_updates(updates):
                 text = ''
                 msg, text = splitDualInput(msg, text)
 
-            if not msg.isdigit():
+            try:
+                task_id = list(map(int, msg.split(' ')))
+            except:
                 CONNECTION.sendMessage("You must inform the task id", chat)
+                return
+            if command == '/duplicate':
+                TASK.duplicateTask(task_id, chat)
 
-            else:
-                task_id = int(msg)
+            elif command == '/delete':
+                TASK.deleteTask(task_id, chat)
 
-                if command == '/duplicate':
-                    TASK.duplicateTask(task_id, chat)
+            elif command == '/todo':
+                TASK.moveTask(command, task_id, chat)
 
-                elif command == '/delete':
-                    TASK.deleteTask(task_id, chat)
+            elif command == '/doing':
+                TASK.moveTask(command, task_id, chat)
 
-                elif command == '/todo':
-                    TASK.moveTask(command, task_id, chat)
+            elif command == '/done':
+                TASK.moveTask(command, task_id, chat)
 
-                elif command == '/doing':
-                    TASK.moveTask(command, task_id, chat)
+            elif command == '/rename':
+                TASK.renameTask(text, task_id, chat)
 
-                elif command == '/done':
-                    TASK.moveTask(command, task_id, chat)
+            elif command == '/priority':
+                TASK.priorityTask(text, task_id, chat)
 
-                elif command == '/rename':
-                    TASK.renameTask(text, task_id, chat)
-
-                elif command == '/priority':
-                    TASK.priorityTask(text, task_id, chat)
-
-                elif command == '/dependson':
-                    TASK.dependson(text, task_id, chat)
+            elif command == '/dependson':
+                TASK.dependson(text, task_id, chat)
 def main():
     last_update_id = None
     while True:

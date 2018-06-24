@@ -4,6 +4,7 @@ import time
 import string
 from Classes.connection import Connection
 from Classes.task import Tasks
+from Classes.github import GitHub
 
 import db
 from db import Task
@@ -28,6 +29,7 @@ COMMANDS = [' /new ', ' /todo ', ' /doing ', ' /done ',
 
 CONNECTION = Connection()
 TASK = Tasks()
+GITHUB = GitHub()
 
 def get_last_update_id(updates):
     update_ids = []
@@ -78,6 +80,8 @@ def handle_updates(updates):
 
         elif command == '/new':
             TASK.createTask(msg, chat)
+            GITHUB.github_issue(msg, chat)
+
 
         elif command == '/list':
             TASK.showTaskList(chat)

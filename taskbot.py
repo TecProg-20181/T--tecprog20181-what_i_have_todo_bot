@@ -101,7 +101,8 @@ def handle_updates(updates):
                 msg, text = splitDualInput(msg, text)
 
             try:
-                task_id = list(map(int, msg.split(' ')))
+                list_task_id = list(map(int, msg.split(' ')))
+                task_id = int(msg)
             except:
                 CONNECTION.sendMessage("You must inform the task id", chat)
                 return
@@ -112,13 +113,13 @@ def handle_updates(updates):
                 TASK.deleteTask(task_id, chat)
 
             elif command == '/todo':
-                TASK.moveTask(command, task_id, chat)
+                TASK.moveTask(command, list_task_id, chat)
 
             elif command == '/doing':
-                TASK.moveTask(command, task_id, chat)
+                TASK.moveTask(command, list_task_id, chat)
 
             elif command == '/done':
-                TASK.moveTask(command, task_id, chat)
+                TASK.moveTask(command, list_task_id, chat)
 
             elif command == '/rename':
                 TASK.renameTask(text, task_id, chat)

@@ -101,34 +101,33 @@ def handle_updates(updates):
                 msg, text = splitDualInput(msg, text)
 
             try:
-                list_task_id = list(map(int, msg.split(' ')))
-                task_id = int(msg)
+                task_id = list(map(int, msg.split(' ')))
             except:
                 CONNECTION.sendMessage("You must inform the task id", chat)
                 return
             if command == '/duplicate':
-                TASK.duplicateTask(task_id, chat)
+                TASK.duplicateTask(task_id[0], chat)
 
             elif command == '/delete':
-                TASK.deleteTask(task_id, chat)
+                TASK.deleteTask(task_id[0], chat)
 
             elif command == '/todo':
-                TASK.moveTask(command, list_task_id, chat)
+                TASK.moveTask(command, task_id, chat)
 
             elif command == '/doing':
-                TASK.moveTask(command, list_task_id, chat)
+                TASK.moveTask(command, task_id, chat)
 
             elif command == '/done':
-                TASK.moveTask(command, list_task_id, chat)
+                TASK.moveTask(command, task_id, chat)
 
             elif command == '/rename':
-                TASK.renameTask(text, task_id, chat)
+                TASK.renameTask(text, task_id[0], chat)
 
             elif command == '/priority':
-                TASK.priorityTask(text, task_id, chat)
+                TASK.priorityTask(text, task_id[0], chat)
 
             elif command == '/dependson':
-                TASK.dependson(text, task_id, chat)
+                TASK.dependson(text, task_id[0], chat)
 def main():
     last_update_id = None
     while True:

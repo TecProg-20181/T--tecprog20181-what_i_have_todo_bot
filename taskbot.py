@@ -12,9 +12,9 @@ from db import Task
 HELP = """
  /new NOME
  /setDuedate ID DUEDATE
- /todo IDs
- /doing IDs
- /done IDs
+ /todo ID(s)
+ /doing ID(s)
+ /done ID(s)
  /delete ID
  /list
  /rename ID NOME

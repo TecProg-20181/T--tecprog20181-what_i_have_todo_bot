@@ -187,11 +187,11 @@ class Tasks():
                         self.taskdep = self.query.one()
                         self.dependencyList = self.taskdep.dependencies.split(',')
                         hasCircularDependency = False
-                        if not str(self.task.id) in self.dependencyList and int(task_id) != int(text):
-                            self.taskdep.parents += str(self.task.id) + ','
-                        else:
+                        if self.verifyCircularDependency(self.task, self.taskdep.id, chat) or int(task_id) == int(text):
                             CONNECTION.sendMessage("This task already depends on other", chat)
                             hasCircularDependency = True
+                        else:
+                            self.taskdep.parents += str(self.task.id) + ','
 
                     except sqlalchemy.orm.exc.NoResultFound:
                         CONNECTION.sendMessage("_404_ Task {} not found x.x".format(depid), chat)
@@ -204,6 +204,23 @@ class Tasks():
                         CONNECTION.sendMessage("Task {} dependencies up to date".format(task_id), chat)
 
         db.session.commit()
+
+    def verifyCircularDependency(self, task, taskdep_id, chat):
+        if  task.parents != '':
+
+            taskId = task.parents.split(',')
+            taskId.pop()
+
+            idList = [int(idTask) for idTask in taskId]
+
+            if taskdep_id in idList:
+                return True
+            else:
+                query = db.session.query(Task).filter_by(id=idList[0], chat=chat)
+                taskId = query.one()
+                return self.verifyCircularDependency(taskId, taskdep_id, chat)
+
+        return False
 
     def renameTask(self, text, task_id, chat):
         self.task = self.treatException(task_id, chat)

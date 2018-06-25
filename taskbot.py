@@ -11,9 +11,10 @@ from db import Task
 
 HELP = """
  /new NOME
- /todo ID
- /doing ID
- /done ID
+ /setDuedate ID DUEDATE
+ /todo IDs
+ /doing IDs
+ /done IDs
  /delete ID
  /list
  /rename ID NOME
@@ -23,8 +24,8 @@ HELP = """
  /help
 """
 
-COMMANDS = [' /new ', ' /todo ', ' /doing ', ' /done ',
-           ' /delete ', ' /list ', ' /rename ', ' /help ', 
+COMMANDS = [' /new ', ' /setDuedate ', ' /todo ', ' /doing ', ' /done ',
+           ' /delete ', ' /list ', ' /rename ', ' /help ',
            ' /dependson ', ' /duplicate ', ' /priority ']
 
 CONNECTION = Connection()
@@ -36,15 +37,15 @@ def get_last_update_id(updates):
     for update in updates["result"]:
         update_ids.append(int(update["update_id"]))
     return max(update_ids)
-    
-def splitDualInput(msg, text):    
+
+def splitDualInput(msg, text):
     if msg != '':
         if len(msg.split(' ', 1)) > 1:
             text = msg.split(' ', 1)[1]
         msg = msg.split(' ', 1)[0]
     return msg, text
 
-    
+
 
 def gettingMessage(update):
     if 'message' in update:
@@ -67,7 +68,7 @@ def gettingMessage(update):
 def handle_updates(updates):
     for update in updates["result"]:
         newMessage = gettingMessage(update)
-        
+
         command = newMessage.get('command')
         msg = newMessage.get('msg')
         chat = newMessage.get('chat')
@@ -80,7 +81,7 @@ def handle_updates(updates):
 
         elif command == '/new':
             TASK.createTask(msg, chat)
-            GITHUB.github_issue(msg, chat)
+            #GITHUB.github_issue(msg, chat)
 
 
         elif command == '/list':
@@ -89,17 +90,16 @@ def handle_updates(updates):
         elif command == '/start':
             CONNECTION.sendMessage("Welcome! Here is a list of things you can do.", chat)
             CONNECTION.sendMessage(HELP, chat)
-            
+
         elif command == '/help':
             CONNECTION.sendMessage("Here is a list of things you can do.", chat)
             CONNECTION.sendMessage(HELP, chat)
 
 
-        else: 
-            if command in ['/dependson', '/priority', '/rename']:
+        else:
+            if command in ['/dependson', '/priority', '/rename', '/setDuedate']:
                 text = ''
                 msg, text = splitDualInput(msg, text)
-
             try:
                 task_id = list(map(int, msg.split(' ')))
             except:
@@ -126,8 +126,13 @@ def handle_updates(updates):
             elif command == '/priority':
                 TASK.priorityTask(text, task_id[0], chat)
 
+            elif command == '/setDuedate':
+                task_id = int(msg)
+                TASK.setDuedate(text, task_id, chat)
+
             elif command == '/dependson':
                 TASK.dependson(text, task_id[0], chat)
+
 def main():
     last_update_id = None
     while True:

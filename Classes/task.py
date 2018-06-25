@@ -1,10 +1,13 @@
 import sqlalchemy
 
 import db
+from datetime import datetime, date
 from db import Task
 from Classes.connection import Connection
 
 CONNECTION = Connection()
+DEFAULTDUEDATE = '01/01/2018'
+DEFAULTDUEDATEFORMATED = datetime.strptime(DEFAULTDUEDATE,"%d/%m/%Y").date()
 
 class Tasks():
     def __init__(self):
@@ -44,10 +47,32 @@ class Tasks():
         return self.task
 
     def createTask(self, msg, chat):
-        self.task = db.Task(chat=chat, name=msg, status='TODO', dependencies='', parents='', priority='')
+        self.task = db.Task(chat=chat, name=msg, status='TODO', dependencies='', parents='', priority='', duedate=DEFAULTDUEDATEFORMATED)
         db.session.add(self.task)
         db.session.commit()
         CONNECTION.sendMessage("New task *TODO* [[{}]] {}".format(self.task.id, self.task.name), chat)
+
+    def setDuedate(self, text, task_id, chat):
+        count = 0
+
+        self.task = self.treatException(task_id, chat)
+        if self.task == 1:
+            return
+
+        if text == '':
+            self.task.duedate = DEFAULTDUEDATEFORMATED
+            CONNECTION.sendMessage("_Cleared_ duedate from task {}".format(task_id), chat)
+        else:
+            for i in text:
+                if i == '/':
+                    count = count + 1
+            if count == 2:
+                duedateFormated = datetime.strptime(text,"%d/%m/%Y").date()
+                self.task.duedate = duedateFormated
+                CONNECTION.sendMessage("*Task {}* has duedate *{}*".format(task_id, self.task.duedate), chat)
+            else:
+                CONNECTION.sendMessage("The Duedate *must* follow the pattern: dd/mm/yy", chat)
+        db.session.commit()
 
     def duplicateTask(self, task_id, chat):
         self.task = self.treatException(task_id, chat)
@@ -104,8 +129,10 @@ class Tasks():
                 self.icon = '\U000023FA'
             elif self.task.status == 'DONE':
                 self.icon = '\U00002611'
-
-            self.a += '[[{}]] {} {} {}\n'.format(self.task.id, self.icon, self.task.name, self.task.priority)
+            if self.task.duedate != DEFAULTDUEDATEFORMATED:
+                self.a += '[[{}]] {} {} {} *Duedate:* {}\n'.format(self.task.id, self.icon, self.task.name, self.task.priority, self.task.duedate)
+            else:
+                self.a += '[[{}]] {} {} {}\n'.format(self.task.id, self.icon, self.task.name, self.task.priority)
             self.a += self.deps_text(self.task, chat)
 
         CONNECTION.sendMessage(self.a, chat)
@@ -115,15 +142,24 @@ class Tasks():
         self.query = db.session.query(db.Task).filter_by(status='TODO', chat=chat).order_by(db.Task.id)
         self.a += '\n\U0001F195 *TODO*\n'
         for self.task in self.query.all():
-            self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
+            if self.task.duedate != DEFAULTDUEDATEFORMATED:
+                self.a += '[[{}]] {} {} *Duedate:* {}\n'.format(self.task.id, self.task.name, self.task.priority, self.task.duedate)
+            else:
+                self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
         self.query = db.session.query(db.Task).filter_by(status='DOING', chat=chat).order_by(db.Task.id)
         self.a += '\n\U000023FA *DOING*\n'
         for self.task in self.query.all():
-            self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
+            if self.task.duedate != DEFAULTDUEDATEFORMATED:
+                self.a += '[[{}]] {} {} *Duedate:* {}\n'.format(self.task.id, self.task.name, self.task.priority, self.task.duedate)
+            else:
+                self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
         self.query = db.session.query(db.Task).filter_by(status='DONE', chat=chat).order_by(db.Task.id)
         self.a += '\n\U00002611 *DONE*\n'
         for self.task in self.query.all():
-            self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
+            if self.task.duedate != DEFAULTDUEDATEFORMATED:
+                self.a += '[[{}]] {} {} *Duedate:* {}\n'.format(self.task.id, self.task.name, self.task.priority, self.task.duedate)
+            else:
+                self.a += '[[{}]] {} {}\n'.format(self.task.id, self.task.name, self.task.priority)
 
         CONNECTION.sendMessage(self.a, chat)
 

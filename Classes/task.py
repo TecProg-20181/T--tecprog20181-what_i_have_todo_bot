@@ -66,12 +66,13 @@ class Tasks():
             for i in text:
                 if i == '/':
                     count = count + 1
-            if count == 2:
+
+            if count == 2 and (int(text[6:10]) >= 2018) and int(text[3:5]) <= 12 and  int(text[3:5]) >= 1 and int(text[0:2]) <= 31 and int(text[0:2]) >= 1:
                 duedateFormated = datetime.strptime(text,"%d/%m/%Y").date()
                 self.task.duedate = duedateFormated
                 CONNECTION.sendMessage("*Task {}* has duedate *{}*".format(task_id, self.task.duedate), chat)
             else:
-                CONNECTION.sendMessage("The Duedate *must* follow the pattern: dd/mm/yy", chat)
+                CONNECTION.sendMessage("The Duedate *must* follow the pattern: dd/mm/yy and dd must be between 01 and 31, mm between 01 and 12 and yy >= 2018", chat)
         db.session.commit()
 
     def duplicateTask(self, task_id, chat):

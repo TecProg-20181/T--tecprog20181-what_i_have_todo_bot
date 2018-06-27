@@ -15,7 +15,7 @@ HELP = """
  /todo ID(s)
  /doing ID(s)
  /done ID(s)
- /delete ID
+ /delete ID(s)
  /list
  /rename ID NOME
  /dependson ID ID...
@@ -81,7 +81,7 @@ def handle_updates(updates):
 
         elif command == '/new':
             TASK.createTask(msg, chat)
-            #GITHUB.github_issue(msg, chat)
+            GITHUB.github_issue(msg, chat)
 
 
         elif command == '/list':
@@ -106,7 +106,7 @@ def handle_updates(updates):
                 CONNECTION.sendMessage("You must inform the task id", chat)
                 return
             if command == '/duplicate':
-                TASK.duplicateTask(task_id, chat)
+                TASK.duplicateTask(task_id[0], chat)
 
             elif command == '/delete':
                 TASK.deleteTask(task_id, chat)

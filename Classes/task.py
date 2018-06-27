@@ -10,8 +10,6 @@ DEFAULTDUEDATE = '01/01/2018'
 DEFAULTDUEDATEFORMATED = datetime.strptime(DEFAULTDUEDATE,"%d/%m/%Y").date()
 
 class Tasks():
-    def __init__(self):
-        self.task_id = ''
 
     def deps_text(self, task, chat, preceed=''):
         text = ''
@@ -61,39 +59,37 @@ class Tasks():
 
         if text == '':
             self.task.duedate = DEFAULTDUEDATEFORMATED
-            CONNECTION.sendMessage("_Cleared_ duedate from task {}".format(self.task_id), chat)
+            CONNECTION.sendMessage("_Cleared_ duedate from task {}".format(task_id), chat)
         else:
             for i in text:
                 if i == '/':
                     self.count = self.count + 1
 
-            if self.count == 2 and (int(text[6:10]) >= 2018) and int(text[3:5]) <= 12 and  int(text[3:5]) >= 1 and int(text[0:2]) <= 31 and int(text[0:2]) >= 1:
+            if len(text) == 10 and self.count == 2 and (int(text[6:10]) >= 2018) and int(text[3:5]) <= 12 and  int(text[3:5]) >= 1 and int(text[0:2]) <= 31 and int(text[0:2]) >= 1:
                 self.duedateFormated = datetime.strptime(text,"%d/%m/%Y").date()
                 self.task.duedate = self.duedateFormated
-                CONNECTION.sendMessage("*Task {}* has duedate *{}*".format(self.task_id, self.task.duedate), chat)
+                CONNECTION.sendMessage("*Task {}* has duedate *{}*".format(task_id, self.task.duedate), chat)
             else:
                 CONNECTION.sendMessage("The Duedate *must* follow the pattern: dd/mm/yy and dd must be between 01 and 31, mm between 01 and 12 and yy >= 2018", chat)
         db.session.commit()
 
     def duplicateTask(self, task_id, chat):
-        self.count = 0
-        while self.count < len(task_id):
-            self.task = self.treatException(task_id[self.count], chat)
-            if self.task == 1:
-                return
+        self.task = self.treatException(task_id, chat)
+        if self.task == 1:
+            return
 
-            self.dtask = db.Task(chat=self.task.chat, name=self.task.name, status=self.task.status, dependencies=self.task.dependencies,
-                            parents=self.task.parents, priority=self.task.priority, duedate=self.task.duedate)
-            db.session.add(self.dtask)
+        self.dtask = db.Task(chat=self.task.chat, name=self.task.name, status=self.task.status, dependencies=self.task.dependencies,
+                        parents=self.task.parents, priority=self.task.priority, duedate=self.task.duedate)
+        db.session.add(self.dtask)
 
-            for t in self.task.dependencies.split(',')[:-1]:
-                self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
-                t = self.qy.one()
-                t.parents += '{},'.format(self.dtask.id)
+        for t in self.task.dependencies.split(',')[:-1]:
+            self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
+            t = self.qy.one()
+            t.parents += '{},'.format(self.dtask.id)
 
-            db.session.commit()
-            CONNECTION.sendMessage("New task *TODO* [[{}]] {}".format(self.dtask.id, self.dtask.name), chat)
-            self.count = self.count + 1
+        db.session.commit()
+        CONNECTION.sendMessage("New task *TODO* [[{}]] {}".format(self.dtask.id, self.dtask.name), chat)
+
 
     def moveTask(self, command, task_id, chat):
         self.count = 0
@@ -124,7 +120,7 @@ class Tasks():
             db.session.commit()
             CONNECTION.sendMessage("Task [[{}]] deleted".format(task_id[self.count]), chat)
             self.count = self.count + 1
-        
+
 
     def showTaskList(self, chat):
         self.a = ''

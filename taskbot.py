@@ -106,18 +106,12 @@ def handle_updates(updates):
                 CONNECTION.sendMessage("You must inform the task id", chat)
                 return
             if command == '/duplicate':
-                TASK.duplicateTask(task_id[0], chat)
+                TASK.duplicateTask(task_id, chat)
 
             elif command == '/delete':
-                TASK.deleteTask(task_id[0], chat)
+                TASK.deleteTask(task_id, chat)
 
-            elif command == '/todo':
-                TASK.moveTask(command, task_id, chat)
-
-            elif command == '/doing':
-                TASK.moveTask(command, task_id, chat)
-
-            elif command == '/done':
+            elif command in ['/todo', '/doing', '/done']:
                 TASK.moveTask(command, task_id, chat)
 
             elif command == '/rename':
@@ -127,8 +121,7 @@ def handle_updates(updates):
                 TASK.priorityTask(text, task_id[0], chat)
 
             elif command == '/setDuedate':
-                task_id = int(msg)
-                TASK.setDuedate(text, task_id, chat)
+                TASK.setDuedate(text, task_id[0], chat)
 
             elif command == '/dependson':
                 TASK.dependson(text, task_id[0], chat)

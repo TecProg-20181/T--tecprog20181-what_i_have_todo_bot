@@ -76,21 +76,24 @@ class Tasks():
         db.session.commit()
 
     def duplicateTask(self, task_id, chat):
-        self.task = self.treatException(task_id, chat)
-        if self.task == 1:
-            return
+        count = 0
+        while count < len(task_id):
+            self.task = self.treatException(task_id[count], chat)
+            if self.task == 1:
+                return
 
-        self.dtask = db.Task(chat=self.task.chat, name=self.task.name, status=self.task.status, dependencies=self.task.dependencies,
-                        parents=self.task.parents, priority=self.task.priority, duedate=self.task.duedate)
-        db.session.add(self.dtask)
+            self.dtask = db.Task(chat=self.task.chat, name=self.task.name, status=self.task.status, dependencies=self.task.dependencies,
+                            parents=self.task.parents, priority=self.task.priority, duedate=self.task.duedate)
+            db.session.add(self.dtask)
 
-        for t in self.task.dependencies.split(',')[:-1]:
-            self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
-            t = self.qy.one()
-            t.parents += '{},'.format(self.dtask.id)
+            for t in self.task.dependencies.split(',')[:-1]:
+                self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
+                t = self.qy.one()
+                t.parents += '{},'.format(self.dtask.id)
 
-        db.session.commit()
-        CONNECTION.sendMessage("New task *TODO* [[{}]] {}".format(self.dtask.id, self.dtask.name), chat)
+            db.session.commit()
+            CONNECTION.sendMessage("New task *TODO* [[{}]] {}".format(self.dtask.id, self.dtask.name), chat)
+            count = count + 1
 
     def moveTask(self, command, task_id, chat):
         count = 0
@@ -104,20 +107,24 @@ class Tasks():
             count = count + 1
 
     def deleteTask(self, task_id, chat):
-        self.task = self.treatException(task_id, chat)
-        if self.task == 1:
-            return
+        count = 0
+        while count < len(task_id):
+            self.task = self.treatException(task_id[count], chat)
+            if self.task == 1:
+                return
 
-        if self.task.parents != '':
-            CONNECTION.sendMessage("There are dependencies to perform this task, finish them first", chat)
-            return
-        for t in self.task.dependencies.split(',')[:-1]:
-            self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
-            t = self.qy.one()
-            t.parents = t.parents.replace('{},'.format(self.task.id), '')
-        db.session.delete(self.task)
-        db.session.commit()
-        CONNECTION.sendMessage("Task [[{}]] deleted".format(task_id), chat)
+            if self.task.parents != '':
+                CONNECTION.sendMessage("There are dependencies to perform this task, finish them first", chat)
+                return
+            for t in self.task.dependencies.split(',')[:-1]:
+                self.qy = db.session.query(db.Task).filter_by(id=int(t), chat=chat)
+                t = self.qy.one()
+                t.parents = t.parents.replace('{},'.format(self.task.id), '')
+            db.session.delete(self.task)
+            db.session.commit()
+            CONNECTION.sendMessage("Task [[{}]] deleted".format(task_id[count]), chat)
+            count = count + 1
+        
 
     def showTaskList(self, chat):
         self.a = ''
